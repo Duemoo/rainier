@@ -1,5 +1,6 @@
 import os
 import random
+import json
 from torch.utils.data import Dataset
 
 datapath_by_task_and_split = {
@@ -18,6 +19,7 @@ datapath_by_task_and_split = {
     'riddlesense': {'default': 'riddlesense'},
     'quartz': {'default': 'quartz'},
     'hellaswag': {'default': 'hellaswag'},
+    'smlm': {'default': 'smlm'}
 }
 
 '''
@@ -27,6 +29,40 @@ tasks_by_split = {
     'test': ['obqa', 'arc_e', 'arc_h', 'ai2sci_e', 'ai2sci_m', 'csqa', 'qasc', 'piqa', 'siqa', 'wg', 'numersense', 'riddlesense', 'quartz', 'hellaswag'],
 }
 '''
+
+class SMLMDataset(Dataset):
+    def __init__(self, split, fpath):
+        __super__.init()
+        self.split = split
+        assert split in fpath
+        with open(fpath, 'r') as f:
+            data = json.load(f)
+        instances = {}
+        instances['question'] = data.pop('input')
+        instances['answer'] = data.pop('target')
+        self.instances = instances
+
+        if split == 'train':
+            random.shuffle(self.instances)
+
+    def __len__(self):
+        return len(self.instances)
+
+    def __getitem__(self, idx):
+        return self.instances[idx]
+
+    @staticmethod
+    def collate_fn(batch):
+        batched_dict = {}
+        all_keys = batch[0].keys()
+        for k in all_keys:
+            batched_dict[k] = []
+        for cur_dict in batch:
+            for k in all_keys:
+                batched_dict[k].append(cur_dict[k])
+        return batched_dict
+
+
 
 class QADataset(Dataset):
     def __init__(self, split, tasks):

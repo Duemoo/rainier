@@ -51,8 +51,7 @@ def main():
                 7: [20, 21, 22, 23],
             }
         else:
-            log.error('Invalid number of GPUs! Please use 8')
-            exit(-1)
+            device_map = "auto"
     elif args.mode == 'eval':
         if num_gpus == 4:  # 4x RTX6000
             device_map = {
@@ -61,6 +60,8 @@ def main():
                 2: [8, 9, 10, 11, 12, 13, 14, 15],
                 3: [16, 17, 18, 19, 20, 21, 22, 23],
             }
+        else:
+            device_map = "auto"
 
     # Set up save directories
     if not args.nosave:
@@ -109,12 +110,12 @@ def main():
     log.info(f'Loading data ...')
 
     if args.mode == 'train':
-        train_dataset = QADataset('train', args.train_tasks)
+        train_dataset = SMLMDataset('train', args.train_fpath)
         # train ds is shuffled in its constructor
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True, collate_fn=QADataset.collate_fn)
         log.info(f'Loaded train set with {len(train_dataset)} instances')
 
-        eval_dataset = QADataset('dev', args.train_tasks)
+        eval_dataset = SMLMDataset('dev', args.eval_fpath)
         eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, collate_fn=QADataset.collate_fn)
         log.info(f'Loaded dev set with {len(eval_dataset)} instances')
 
@@ -122,7 +123,7 @@ def main():
         train_dataset = None
         train_dataloader = None
 
-        eval_dataset = QADataset(args.eval_split, args.eval_tasks)
+        eval_dataset = SMLMDataset(args.eval_split, args.eval_fpath)
         eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=QADataset.collate_fn)
         log.info(f'Loaded {args.eval_split} set with {len(eval_dataset)} instances')
 
@@ -149,7 +150,6 @@ def main():
             device=devices[0],
             device_map=device_map,
         )
-        # TODO: Try initializing this with model_ckpt as well
         value = Value(
             model_type=args.model_type,
             model_ckpt=args.model_ckpt if args.use_model_ckpt_for_value else None,
@@ -157,6 +157,7 @@ def main():
             device=devices[0],
             device_map=device_map,
         )
+        # TODO: change reward model to enc-T5 and calculate reward by emb similarity
         reward = Reward(
             model_type=args.qa_model_type,
             model_ckpt=args.qa_model_ckpt,
@@ -166,6 +167,7 @@ def main():
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
+            eval_model_type=args.eval_model_type
         )
 
         optimizer = torch.optim.Adam(policy.model.parameters() if args.policy_value_sharing else itertools.chain(policy.model.parameters(), value.model.parameters()), lr=args.lr, eps=1e-5)
@@ -187,6 +189,7 @@ def main():
             checkpoint.clear()
 
             # Reuse the reward normalization results
+            # TODO: revisit this
             reward.read_reward_norm(args.reward_dir)
 
     elif args.mode == 'eval':
@@ -202,8 +205,8 @@ def main():
         )
         value = None
         reward = Reward(
-            model_type=args.qa_model_type,
-            model_ckpt=args.qa_model_ckpt,
+            model_type=args.eval_model_type,
+            model_ckpt=args.eval_model_ckpt,
             max_input_len=args.max_input_len,
             batch_size=args.batch_size,
             reward_shape=args.reward_shape,

@@ -61,6 +61,7 @@ class PPOTrainer:
 
         self.eval_accs = eval_accs
 
+    # TODO: rewrite loss calculation using similarity reward
     def loss(self, results):
         old_values = results['response/value']
         old_logprobs = results['response/logprobs']
@@ -155,11 +156,9 @@ class PPOTrainer:
             reward_results = self.reward_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
-                choicess=batch['choices'],
-                answer_ixs=batch['answer_ix'],
             )
             results = {**results, **reward_results}
-            self.reward_model.kl_penalize_reward(results)
+            #self.reward_model.kl_penalize_reward(results)
 
         # Train
         # Do multiple epochs of PPO training, with a fresh random shuffle in each epoch
@@ -203,7 +202,7 @@ class PPOTrainer:
 
         corrects = []
         corrects_by_task = defaultdict(list)
-        results_table = wandb.Table(columns=['step', 'id', 'task', 'question', 'knowledge', 'pred', 'answer_ix', 'correct'])
+        results_table = wandb.Table(columns=['step', 'id', 'question', 'knowledge', 'pred', 'answer', 'correct'])
 
         for i, batch in enumerate(tqdm(self.eval_dataloader)):
             with torch.no_grad():
@@ -216,8 +215,6 @@ class PPOTrainer:
                 results = self.reward_model.get_reward(
                     questions=batch['question'],
                     knowledges=knowledges,
-                    choicess=batch['choices'],
-                    answer_ixs=batch['answer_ix'], 
                     override_bias=0,
                     override_gain=1,
                 )
@@ -226,7 +223,7 @@ class PPOTrainer:
             for task, c in zip(batch['task'], results['corrects']):
                 corrects_by_task[task].append(c)
 
-            results_table.add_data(step, i, batch['task'][0], batch['question'][0], knowledges[0], results['preds'][0], batch['answer_ix'][0], results['corrects'][0])
+            results_table.add_data(step, i, batch['question'][0], knowledges[0], results['preds'][0], batch['answer'][0], results['corrects'][0])
 
         acc_weighted = np.mean(corrects)
         acc_by_task = {k: np.mean(v) for k, v in corrects_by_task.items()}
@@ -288,27 +285,26 @@ class PPOTrainer:
                 results = self.reward_model.get_reward_ensemble(
                     questions=batch['question'],
                     knowledgess=knowledgess,
-                    choicess=batch['choices'],
-                    answer_ixs=batch['answer_ix'], 
                     override_bias=0,
                     override_gain=1,
                 )
 
+            # TODO: report predictions instead of corrects
             corrects += results['corrects']
             for task, c in zip(batch['task'], results['corrects']):
                 corrects_by_task[task].append(c)
 
+            # TODO: revisit answer comparison - remove corrects and add similarity
             knowledgess = [list(x) for x in zip(*knowledgess)] if len(knowledgess) > 0 else [[] for _ in batch['question']] # transpose the knowledege matrix
-            for i, (task, question, choices, answer_ix, knowledges) in enumerate(zip(batch['task'], batch['question'], batch['choices'], batch['answer_ix'], knowledgess)):
+            for i, (question, answer, knowledges) in enumerate(zip(batch['question'], batch['answer'], knowledgess)):
                 item = {
-                    'task': task,
                     'split': self.args.eval_split,
                     'query': question,
-                    'cands': choices,
-                    'answer': choices[answer_ix],
+                    'answer': answer,
                     'knowledges': knowledges,
                 }
                 knowledge_outputs.append(copy.deepcopy(item))
+                # TODO: answer_logits and probs to sim scores?
                 item.update({
                     'scores_': results['answer_logitss'][:, i, :len(choices)].tolist(),
                     'probs_': results['answer_probss'][:, i, :len(choices)].tolist(),
@@ -359,8 +355,6 @@ class PPOTrainer:
             reward_results = self.reward_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
-                choicess=batch['choices'],
-                answer_ixs=batch['answer_ix'],
                 override_bias=0,
                 override_gain=1,
             )

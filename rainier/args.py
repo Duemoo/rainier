@@ -13,6 +13,10 @@ def get_args():
         '--train_tasks', type=str, default='obqa,arc_e,arc_h,ai2sci_e,ai2sci_m,csqa,qasc,piqa,siqa,wg')
     parser.add_argument(
         '--eval_tasks', type=str, default='obqa,arc_e,arc_h,ai2sci_e,ai2sci_m,csqa,qasc,piqa,siqa,wg,numersense,riddlesense,quartz,hellaswag')
+    praser.add_argument(
+        '--train_fpath', type=str, default='./data/smlm/smlm_train.json')
+    parser.add_argument(
+        '--eval_fpath', type=str, default='./data/smlm/smlm_validation.json')
     parser.add_argument(
         '--eval_split', type=str, default='dev', choices=['dev', 'test'])
 
@@ -26,9 +30,9 @@ def get_args():
     parser.add_argument(
         '--policy_value_sharing', action='store_true', default=False)
     parser.add_argument(
-        '--qa_model_type', type=str, default='allenai/unifiedqa-t5-large', help='model used for QA')
+        '--eval_model_type', type=str, default='sentence-transformers/sentence-t5-large', help='model used for reward calculation')
     parser.add_argument(
-        '--qa_model_ckpt', type=str, default=None, help='model ckpt used for QA')
+        '--eval_model_ckpt', type=str, default=None, help='model ckpt used for reward calculation')
     parser.add_argument(
         '--max_input_len', type=int, default=256, help='max length of the input prompt')
     parser.add_argument(
