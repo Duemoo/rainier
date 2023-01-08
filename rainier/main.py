@@ -157,10 +157,9 @@ def main():
             device=devices[0],
             device_map=device_map,
         )
-        # TODO: change reward model to enc-T5 and calculate reward by emb similarity
         reward = Reward(
-            model_type=args.qa_model_type,
-            model_ckpt=args.qa_model_ckpt,
+            model_type=args.eval_model_type,
+            model_ckpt=args.eval_model_ckpt,
             max_input_len=args.max_input_len,
             batch_size=args.batch_size,
             reward_shape=args.reward_shape,
@@ -189,7 +188,6 @@ def main():
             checkpoint.clear()
 
             # Reuse the reward normalization results
-            # TODO: revisit this
             reward.read_reward_norm(args.reward_dir)
 
     elif args.mode == 'eval':

@@ -62,15 +62,15 @@ class Reward:
         answers = [[a.lower() for a in b] for b in answer]
         
         rewards_raw = []
-        for k, a in zip(questions, answers):
+        for k, a in zip(knowledges, answers):
             k_emb = self.inference_model.embed(k)
             a_emb = self.inference_model.embed(a)
             rewards_raw.append(util.dot_score(k_emb, a_emb))
 
-        if skip_reward:
-            return {
-                'preds': knowledges,
-            }
+        #if skip_reward:
+        #    return {
+        #        'preds': knowledges,
+        #    }
 
         gain = self.gain if override_gain is None else override_gain
         bias = self.bias if override_bias is None else override_bias
@@ -82,7 +82,6 @@ class Reward:
             'rewards/normalized': rewards_normalized,
         }
 
-    # Not used for SMLM setting
     def kl_penalize_reward(self, results):
         logprobs = results['response/logprobs']
         ref_logprobs = results['response/ref_logprobs']

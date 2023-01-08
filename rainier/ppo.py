@@ -61,7 +61,6 @@ class PPOTrainer:
 
         self.eval_accs = eval_accs
 
-    # TODO: rewrite loss calculation using similarity reward
     def loss(self, results):
         old_values = results['response/value']
         old_logprobs = results['response/logprobs']
@@ -158,7 +157,7 @@ class PPOTrainer:
                 knowledges=results['response/text'],
             )
             results = {**results, **reward_results}
-            #self.reward_model.kl_penalize_reward(results)
+            self.reward_model.kl_penalize_reward(results)
 
         # Train
         # Do multiple epochs of PPO training, with a fresh random shuffle in each epoch
@@ -180,7 +179,6 @@ class PPOTrainer:
         if not self.args.nosave and step % self.args.log_interval == 0:
             stats = {
                 'train/step': step,
-                'train/acc': np.mean(results['corrects']),
                 'train/loss/total': results['loss/total'].item(),
                 'train/loss/policy': results['loss/policy'].item(),
                 'train/loss/value': results['loss/value'].item(),
@@ -200,9 +198,8 @@ class PPOTrainer:
             return
         self.log.info(f'Evaluating [ppo_step {step}] ...')
 
-        corrects = []
-        corrects_by_task = defaultdict(list)
-        results_table = wandb.Table(columns=['step', 'id', 'question', 'knowledge', 'pred', 'answer', 'correct'])
+        rewards = []
+        results_table = wandb.Table(columns=['step', 'id', 'question', 'knowledge', 'pred', 'answer'])
 
         for i, batch in enumerate(tqdm(self.eval_dataloader)):
             with torch.no_grad():
@@ -219,23 +216,16 @@ class PPOTrainer:
                     override_gain=1,
                 )
 
-            corrects += results['corrects']
-            for task, c in zip(batch['task'], results['corrects']):
-                corrects_by_task[task].append(c)
+            rewards += results['rewards/raw']
 
-            results_table.add_data(step, i, batch['question'][0], knowledges[0], results['preds'][0], batch['answer'][0], results['corrects'][0])
+            results_table.add_data(step, i, batch['question'][0], knowledges[0], results['preds'][0], batch['answer'][0])
 
-        acc_weighted = np.mean(corrects)
-        acc_by_task = {k: np.mean(v) for k, v in corrects_by_task.items()}
-        acc_unweighted = np.mean(list(acc_by_task.values()))
+        mean_reward = np.mean(rewards)
 
-        self.log.info(f'Evaluated [ppo_step {step}] acc_weighted = {acc_weighted:.4f} | acc_unweighted = {acc_unweighted:.4f}')
-        self.log.info('Accuracy by task:')
-        for task, acc in acc_by_task.items():
-            self.log.info(f'\t{task} = {acc:.4f}')
+        self.log.info(f'Evaluated [ppo_step {step}] mean_reward = {mean_reward:.4f}')
 
         if self.args.nosave:
-            self.eval_accs[step] = acc_unweighted
+            self.eval_accs[step] = mean_reward
         else:
             # self.writer.add_scalar('eval/acc_weighted', acc_weighted, step)
             # self.writer.add_scalar('eval/acc_unweighted', acc_unweighted, step)
@@ -244,15 +234,11 @@ class PPOTrainer:
             stats = {
                 'eval/step': step,
                 'eval/results_table': results_table,
-                'eval/acc_weighted': acc_weighted,
-                'eval/acc_unweighted': acc_unweighted,
             }
-            for task, acc in acc_by_task.items():
-                stats[f'eval/acc/{task}'] = acc
             wandb.log(stats)
 
             prev_best_step = None if len(self.eval_accs) == 0 else max(self.eval_accs, key=self.eval_accs.get)
-            self.eval_accs[step] = acc_unweighted
+            self.eval_accs[step] = mean_reward
             if prev_best_step is None or acc_unweighted > self.eval_accs[prev_best_step]:
                 if prev_best_step is not None:
                     try:
@@ -265,8 +251,7 @@ class PPOTrainer:
     def eval(self, step): # step=-1 for baseline
         self.log.info(f'Evaluating [ppo_step {step}] ...')
 
-        corrects = []
-        corrects_by_task = defaultdict(list)
+        rewards = []
         knowledge_outputs = []
         inference_outputs = []
 
@@ -289,12 +274,9 @@ class PPOTrainer:
                     override_gain=1,
                 )
 
-            # TODO: report predictions instead of corrects
-            corrects += results['corrects']
-            for task, c in zip(batch['task'], results['corrects']):
-                corrects_by_task[task].append(c)
+            # TODO: verify reward
+            rewards += results['rewards/raw']
 
-            # TODO: revisit answer comparison - remove corrects and add similarity
             knowledgess = [list(x) for x in zip(*knowledgess)] if len(knowledgess) > 0 else [[] for _ in batch['question']] # transpose the knowledege matrix
             for i, (question, answer, knowledges) in enumerate(zip(batch['question'], batch['answer'], knowledgess)):
                 item = {
@@ -305,22 +287,15 @@ class PPOTrainer:
                 }
                 knowledge_outputs.append(copy.deepcopy(item))
                 # TODO: answer_logits and probs to sim scores?
-                item.update({
-                    'scores_': results['answer_logitss'][:, i, :len(choices)].tolist(),
-                    'probs_': results['answer_probss'][:, i, :len(choices)].tolist(),
-                    'preds': choices[results['preds'][i].item()],
-                    'ok': int(results['corrects'][i]),
-                })
+                if 'rewards/raw' in results.keys()
+                    item.update({
+                        'rewards/raw': results['rewards/raw']
+                    })
                 inference_outputs.append(item)
 
-        acc_weighted = np.mean(corrects)
-        acc_by_task = {k: np.mean(v) for k, v in corrects_by_task.items()}
-        acc_unweighted = np.mean(list(acc_by_task.values()))
+        mean_reward = np.mean(rewards)
 
-        self.log.info(f'Evaluated [ppo_step {step}] acc_weighted = {acc_weighted:.4f} | acc_unweighted = {acc_unweighted:.4f}')
-        self.log.info('Accuracy by task:')
-        for task, acc in acc_by_task.items():
-            self.log.info(f'\t{task} = {acc:.4f}')
+        self.log.info(f'Evaluated [ppo_step {step}] mean_reward = {mean_reawrd:.4f}')
 
         # self.writer.add_scalar('eval/acc_weighted', acc_weighted, step)
         # self.writer.add_scalar('eval/acc_unweighted', acc_unweighted, step)
@@ -328,11 +303,8 @@ class PPOTrainer:
         #     self.writer.add_scalar(f'eval/acc/{task}', acc, step)
         stats = {
             'eval/step': step,
-            'eval/acc_weighted': acc_weighted,
-            'eval/acc_unweighted': acc_unweighted,
+            'eval/mean_reward': mean_reward,
         }
-        for task, acc in acc_by_task.items():
-            stats[f'eval/acc/{task}'] = acc
         wandb.log(stats)
 
         knowledge_path = os.path.join(self.args.knowledge_dir, f'knowledge_rainier-ckp{step}.json')
