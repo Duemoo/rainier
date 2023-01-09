@@ -24,7 +24,7 @@ def get_args():
     parser.add_argument(
         '--model_type', type=str, default='t5-large', help='model used for policy, ref policy, and value')
     parser.add_argument(
-        '--model_ckpt', type=str, default='../model/rainier-large_stageI.pth', help='model ckpt used for policy and ref policy (NOT value!)')
+        '--model_ckpt', type=str, default=None, help='model ckpt used for policy and ref policy (NOT value!)')
     parser.add_argument(
         '--use_model_ckpt_for_value', action='store_true', default=False)
     parser.add_argument(
