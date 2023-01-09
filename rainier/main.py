@@ -50,8 +50,12 @@ def main():
                 6: [16, 17, 18, 19],
                 7: [20, 21, 22, 23],
             }
+        elif num_gpus == 1:
+            device_map = {
+                0: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23]
+            }
         else:
-            log.error('Invalid number of GPUs! Please use 8')
+            log.error('Invalid number of GPUs!')
             exit(-1)
     elif args.mode == 'eval':
         if num_gpus == 4:  # 4x RTX6000
@@ -133,7 +137,7 @@ def main():
     if args.mode == 'train':
         ref_policy = Policy(
             model_type=args.model_type,
-            model_ckpt=args.model_ckpt,
+            model_ckpt=None,#args.model_ckpt,
             policy_value_sharing=args.policy_value_sharing,
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
@@ -142,7 +146,7 @@ def main():
         )
         policy = Policy(
             model_type=args.model_type,
-            model_ckpt=args.model_ckpt,
+            model_ckpt=None,#args.model_ckpt,
             policy_value_sharing=args.policy_value_sharing,
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
@@ -159,7 +163,7 @@ def main():
         )
         reward = Reward(
             model_type=args.qa_model_type,
-            model_ckpt=args.qa_model_ckpt,
+            model_ckpt=None,#args.qa_model_ckpt,
             max_input_len=args.max_input_len,
             batch_size=args.batch_size,
             reward_shape=args.reward_shape,
