@@ -7,6 +7,7 @@
 /data/quartz
 /data/hellaswag
 /data/knowledge
+/data/smlm
 /model/
 **/wandb/
 **/__pycache__/
