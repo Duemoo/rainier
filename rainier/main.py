@@ -12,7 +12,7 @@ from transformers import get_linear_schedule_with_warmup
 
 from args import get_args
 from utils.utils import ensure_dir, ceil_div, set_seed
-from data import QADataset
+from data import QADataset, SMLMDataset
 from model.policy import Policy
 from model.value import Value
 from model.reward import Reward
