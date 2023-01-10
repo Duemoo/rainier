@@ -37,10 +37,15 @@ class SMLMDataset(Dataset):
         assert split in fpath
         with open(fpath, 'r') as f:
             data = json.load(f)
-        instances = {}
-        instances['question'] = data.pop('input')
-        instances['answer'] = data.pop('target')
-        self.instances = instances
+        instances = []
+        
+        for d in data:
+            instance = []
+            instance['question'] = d.pop('input')
+            instance['answer'] = d.pop('target')
+            instances.append(instance)
+            
+        self.instances = instances[:1000]
 
         if split == 'train':
             random.shuffle(self.instances)
