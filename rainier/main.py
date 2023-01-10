@@ -166,7 +166,6 @@ def main():
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
-            eval_model_type=args.eval_model_type
         )
 
         optimizer = torch.optim.Adam(policy.model.parameters() if args.policy_value_sharing else itertools.chain(policy.model.parameters(), value.model.parameters()), lr=args.lr, eps=1e-5)
