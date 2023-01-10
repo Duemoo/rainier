@@ -41,6 +41,8 @@ def create_sentence_data(data):
 
     processed_data = format_to_mlm_data(processed_data)
     print(f"Done! Exapmle: \n{processed_data[0]}")
+
+    return processed_data
             
 
 def main():
@@ -49,7 +51,7 @@ def main():
     dataset = load_dataset("wikitext", "wikitext-103-v1")
     for split in dataset.keys():
         processed_data = create_sentence_data(dataset[split])
-        fname = f'./smlm_{split}.json'
+        fname = f'./smlm/smlm_{split}.json'
         with open(fname, 'w') as f:
             json.dump(processed_data, f, indent=4)
 
