@@ -13,7 +13,7 @@ def get_args():
         '--train_tasks', type=str, default='obqa,arc_e,arc_h,ai2sci_e,ai2sci_m,csqa,qasc,piqa,siqa,wg')
     parser.add_argument(
         '--eval_tasks', type=str, default='obqa,arc_e,arc_h,ai2sci_e,ai2sci_m,csqa,qasc,piqa,siqa,wg,numersense,riddlesense,quartz,hellaswag')
-    praser.add_argument(
+    parser.add_argument(
         '--train_fpath', type=str, default='./data/smlm/smlm_train.json')
     parser.add_argument(
         '--eval_fpath', type=str, default='./data/smlm/smlm_validation.json')
