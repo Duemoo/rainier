@@ -22,7 +22,7 @@ def get_args():
 
     # model
     parser.add_argument(
-        '--model_type', type=str, default='t5-large', help='model used for policy, ref policy, and value')
+        '--model_type', type=str, default='t5-base', help='model used for policy, ref policy, and value')
     parser.add_argument(
         '--model_ckpt', type=str, default=None, help='model ckpt used for policy and ref policy (NOT value!)')
     parser.add_argument(
@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument(
         '--policy_value_sharing', action='store_true', default=False)
     parser.add_argument(
-        '--eval_model_type', type=str, default='sentence-transformers/sentence-t5-large', help='model used for reward calculation')
+        '--eval_model_type', type=str, default='sentence-transformers/sentence-t5-base', help='model used for reward calculation')
     parser.add_argument(
         '--eval_model_ckpt', type=str, default=None, help='model ckpt used for reward calculation')
     parser.add_argument(

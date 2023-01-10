@@ -287,7 +287,7 @@ class PPOTrainer:
                 }
                 knowledge_outputs.append(copy.deepcopy(item))
                 # TODO: answer_logits and probs to sim scores?
-                if 'rewards/raw' in results.keys()
+                if 'rewards/raw' in results.keys():
                     item.update({
                         'rewards/raw': results['rewards/raw']
                     })
@@ -327,6 +327,7 @@ class PPOTrainer:
             reward_results = self.reward_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
+                answer=batch['answer'],
                 override_bias=0,
                 override_gain=1,
             )

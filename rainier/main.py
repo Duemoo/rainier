@@ -50,6 +50,10 @@ def main():
                 6: [16, 17, 18, 19],
                 7: [20, 21, 22, 23],
             }
+        elif num_gpus == 1 :
+            device_map = {
+                0: list(range(12))
+            }
         else:
             device_map = "auto"
     elif args.mode == 'eval':

@@ -32,17 +32,16 @@ tasks_by_split = {
 
 class SMLMDataset(Dataset):
     def __init__(self, split, fpath):
-        __super__.init()
         self.split = split
-        assert split in fpath
         with open(fpath, 'r') as f:
             data = json.load(f)
         instances = []
         
         for d in data:
-            instance = []
-            instance['question'] = d.pop('input')
-            instance['answer'] = d.pop('target')
+            instance = {}
+            instance['question'] = d['input']
+            instance['answer'] = d['target']
+            instance['id'] = d['id']
             instances.append(instance)
             
         self.instances = instances[:1000]

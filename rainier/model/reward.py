@@ -63,8 +63,8 @@ class Reward:
         
         rewards_raw = []
         for k, a in zip(knowledges, answers):
-            k_emb = self.inference_model.embed(k)
-            a_emb = self.inference_model.embed(a)
+            k_emb = self.inference_model.encode(k)
+            a_emb = self.inference_model.encode(a)
             rewards_raw.append(util.dot_score(k_emb, a_emb))
 
         #if skip_reward:
