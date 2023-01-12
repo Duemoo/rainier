@@ -170,6 +170,7 @@ def main():
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
+            max_seq_length=args.max_seq_length,
         )
 
         optimizer = torch.optim.Adam(policy.model.parameters() if args.policy_value_sharing else itertools.chain(policy.model.parameters(), value.model.parameters()), lr=args.lr, eps=1e-5)
@@ -214,6 +215,7 @@ def main():
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
+            max_seq_length=args.max_seq_length,
         )
 
         optimizer = None
