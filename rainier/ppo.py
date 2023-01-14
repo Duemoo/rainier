@@ -332,6 +332,9 @@ class PPOTrainer:
                 override_gain=1,
             )
             rewards += reward_results['rewards/raw']
+        #print('='*50)
+        #print(f"size of reward: {len(rewards)}")
+        #print('='*50)
         old_mean, old_std = np.mean(rewards), np.std(rewards)
         new_mean, new_std = 0.0, 1.0
         self.reward_model.gain = new_std / old_std

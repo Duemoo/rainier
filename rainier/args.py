@@ -41,6 +41,8 @@ def get_args():
         '--load_from_ckpt', type=str, default=None, help='ckpt path to resume training or run eval')
     parser.add_argument(
         '--eval_ckpt', type=str, default='../model/rainier-large.pth', help='rainier ckpt to run eval')
+    parser.add_argument(
+        '--max_seq_length', type=int, default=500, help='max seq length for reward model')
 
     # reward
     parser.add_argument(

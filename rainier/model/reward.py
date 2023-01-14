@@ -20,11 +20,13 @@ class Reward:
                  kl_coef,
                  ensembling,
                  device: torch.device,
+                 max_seq_length = 500
                 ):
         self.tokenizer = T5Tokenizer.from_pretrained(model_type)
         self.inference_model = SentenceTransformer(model_ckpt if model_ckpt is not None else model_type)
         #self.inference_model = T5ForConditionalGeneration.from_pretrained(model_ckpt if model_ckpt is not None else model_type)
         self.inference_model.eval()
+        self.inference_model.max_seq_length = max_seq_length
         self.inference_model.to(device)
 
         self.gain, self.bias = None, None
@@ -65,7 +67,11 @@ class Reward:
         for k, a in zip(knowledges, answers):
             k_emb = self.inference_model.encode(k)
             a_emb = self.inference_model.encode(a)
-            rewards_raw.append(util.dot_score(k_emb, a_emb))
+            print(k_emb.size)
+            print(a_emb.size)
+            sim = util.dot_score(k_emb, a_emb)
+            print(f"sim: {sim}")
+            rewards_raw.append(sim.item())
 
         #if skip_reward:
         #    return {
