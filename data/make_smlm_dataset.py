@@ -27,7 +27,18 @@ def format_to_mlm_data(data):
     return processed_data
 
 
-def create_sentence_data(data):
+def format_to_lm_data(data):
+    processed_data = []
+    for i, d in enumerate(data):
+        question = ''.join(d[:-2])
+        target = d[-1]
+        data_dict = {'id': i, 'input': question, 'target': target}
+        processed_data.append(data_dict)
+
+    return processed_data
+
+
+def create_sentence_data(data, mode):
     processed_data = []
     idx = 0
 
@@ -39,22 +50,29 @@ def create_sentence_data(data):
     print(f"len of preprocessed data: {len(data)}")
     print(f"len of processed data: {len(processed_data)}")
 
-    processed_data = format_to_mlm_data(processed_data)
+    if mode=='smlm':
+        processed_data = format_to_mlm_data(processed_data)
+    elif mode=='slm':
+        processed_data = format_to_lm_data(processed_data)
+    else:
+        raise NotImplementedError
+
     print(f"Done! Exapmle: \n{processed_data[0]}")
 
     return processed_data
             
 
-def main():
+def main(mode):
     random.seed(0)
     #load wikitext data
     dataset = load_dataset("wikitext", "wikitext-103-v1")
     for split in dataset.keys():
-        processed_data = create_sentence_data(dataset[split])
-        fname = f'./smlm/smlm_{split}.json'
+        processed_data = create_sentence_data(dataset[split], mode)
+        fname = f'./{mode}/{mode}_{split}.json'
         with open(fname, 'w') as f:
             json.dump(processed_data, f, indent=4)
 
 
 if __name__ == "__main__":
-    main()
+    mode = 'slm'
+    main(mode)
