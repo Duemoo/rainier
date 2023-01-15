@@ -253,7 +253,7 @@ def main():
         policy_model=policy,
         ref_policy_model=ref_policy,
         value_model=value,
-        reward_model=reward,
+        #reward_model=reward,
         optimizer=optimizer,
         scheduler=scheduler,
         init_step=init_step,

@@ -22,7 +22,7 @@ def get_args():
 
     # model
     parser.add_argument(
-        '--model_type', type=str, default='t5-base', help='model used for policy, ref policy, and value')
+        '--model_type', type=str, default='t5-large', help='model used for policy, ref policy, and value')
     parser.add_argument(
         '--model_ckpt', type=str, default=None, help='model ckpt used for policy and ref policy (NOT value!)')
     parser.add_argument(
@@ -80,7 +80,7 @@ def get_args():
     parser.add_argument(
         '--num_warmup_step_ratio', type=float, default=0.0, help = 'ratio of number of steps to use for warmup with linear warmup')
     parser.add_argument(
-        '--batch_size', type=int, default=64, help='batch size')
+        '--batch_size', type=int, default=8, help='batch size')
     parser.add_argument(
         '--noptepochs', type=int, default=4, help='number of ppo epochs reusing rollouts')
     parser.add_argument(

@@ -145,6 +145,7 @@ class Policy:
         similarity = (k_emb*ans_emb).sum(dim=-1)   # 1D tensor(bs)
 
         rewards_raw = similarity.tolist()
+        #print(f"rewards_raw: {rewards_raw}")
 
         #if skip_reward:
         #    return {
@@ -228,10 +229,21 @@ class Policy:
                 output_hidden_states=True,
                 return_dict=True,
             )
-            
-            last_two_hidden_states = encoder_outputs["hidden_states"][-2:]
-            last_two_hidden_states = torch.stack(last_two_hidden_states, dim=0) # shape: (2 * bs * seq_length * hidden_dim)
-            # Mean pooling on last 2 hidden states, following sentence-t5: https://arxiv.org/abs/2108.08877
-            embedding = last_two_hidden_states.mean(dim=0).mean(dim=1)
 
+        last_two_hidden_states = encoder_outputs["hidden_states"][-2:]
+        last_two_hidden_states = torch.stack(last_two_hidden_states, dim=0) # shape: (2 * bs * seq_length * hidden_dim)
+        # Mean pooling on last 2 hidden states, following: https://arxiv.org/abs/2108.08877
+        embedding = last_two_hidden_states.mean(dim=0) # shape: (bs * seq_length * hidden_dim)
+
+        # Mask out hidden states generated from pad tokens
+        attention_mask_unsqueezed = attention_mask.unsqueeze(-1) # shape: (bs * seq_length * 1)
+        embedding = embedding * attention_mask_unsqueezed
+
+        # Mean pooling
+        embedding = embedding.sum(dim=1) # shape: (bs * hidden_dim)
+        seq_lengths = attention_mask.sum(dim=-1)
+        embedding = embedding / seq_lengths.unsqueeze(-1)
+        
+        # Apply L2 norm
+        embedding = torch.nn.functional.normalize(embedding, p=2.0, dim=1)
         return embedding

@@ -27,7 +27,6 @@ class PPOTrainer:
                  policy_model: Policy,
                  ref_policy_model: Policy,
                  value_model: Value,
-                 reward_model: Reward,
                  optimizer: torch.optim.Optimizer,
                  scheduler: torch.optim.lr_scheduler.LambdaLR,
                  init_step: int,
@@ -41,7 +40,6 @@ class PPOTrainer:
         self.policy_model = policy_model
         self.ref_policy_model = ref_policy_model
         self.value_model = value_model
-        self.reward_model = reward_model
         self.optimizer = optimizer
         self.scheduler = scheduler
 
@@ -158,7 +156,7 @@ class PPOTrainer:
                 answer=batch['answer'],
             )
             results = {**results, **reward_results}
-            self.reward_model.kl_penalize_reward(results)
+            self.policy_model.kl_penalize_reward(results)
 
         # Train
         # Do multiple epochs of PPO training, with a fresh random shuffle in each epoch
@@ -316,11 +314,20 @@ class PPOTrainer:
         with open(inference_path, 'w') as f:
             json.dump(inference_outputs, f, indent=4)
 
+
     """
     Internally set bias and gain terms based on the data from the dataloader
     """
     def set_reward_norm(self):
         rewards = []
+
+        def print_example(batch, reward_results, results):
+            q = batch['question'][0]
+            ans = batch['answer'][0]
+            pred = results['response/text'][0]
+            rew = reward_results['rewards/raw'][0]
+            print(f"\nexample:\nquestion: {q}\ntarget: {ans}\npred: {pred}\nreward: {rew}\n")
+
         for batch in tqdm(self.train_dataloader):
             results = self.policy_model.sample(
                 text=batch['question'],
@@ -332,15 +339,17 @@ class PPOTrainer:
                 answer=batch['answer'],
                 override_bias=0,
                 override_gain=1,
-            )
+            )                
+            print_example(batch, reward_results, results)
+            
             rewards += reward_results['rewards/raw']
         #print('='*50)
         #print(f"size of reward: {len(rewards)}")
         #print('='*50)
         old_mean, old_std = np.mean(rewards), np.std(rewards)
         new_mean, new_std = 0.0, 1.0
-        self.reward_model.gain = new_std / old_std
-        self.reward_model.bias = new_mean - self.reward_model.gain * old_mean
+        self.policy_model.gain = new_std / old_std
+        self.policy_model.bias = new_mean - self.policy_model.gain * old_mean
 
     def save(self, step, last=True):
         if self.args.nosave:
