@@ -49,7 +49,7 @@ class Reward:
     def get_reward(self,
                    questions: List[str],
                    knowledges: List[str],
-                   answer: List[int],
+                   answer: List[str],
                    override_gain = None,
                    override_bias = None,
                    skip_reward = False,
@@ -61,16 +61,16 @@ class Reward:
 
         questions = [a.lower() for a in questions]
         knowledges = [a.lower() if a is not None else None for a in knowledges]
-        answers = [[a.lower() for a in b] for b in answer]
+        answers = [a.lower() for a in answer]
         
         rewards_raw = []
         for k, a in zip(knowledges, answers):
+            #print(f"\n\n\n#######################\nanswer: {a}\nknowledge: {k}")
             k_emb = self.inference_model.encode(k)
-            a_emb = self.inference_model.encode(a)
-            print(k_emb.size)
-            print(a_emb.size)
-            sim = util.dot_score(k_emb, a_emb)
-            print(f"sim: {sim}")
+            ans_emb  = self.inference_model.encode(a)
+            #print(f"ans_emb: {ans_emb.size}")
+            sim = util.dot_score(k_emb, ans_emb)
+            #print(f"sim: {sim}")
             rewards_raw.append(sim.item())
 
         #if skip_reward:

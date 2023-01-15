@@ -155,6 +155,7 @@ class PPOTrainer:
             reward_results = self.reward_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
+                answer=batch['answer'],
             )
             results = {**results, **reward_results}
             self.reward_model.kl_penalize_reward(results)
@@ -212,6 +213,7 @@ class PPOTrainer:
                 results = self.reward_model.get_reward(
                     questions=batch['question'],
                     knowledges=knowledges,
+                    answer=batch['answer'],
                     override_bias=0,
                     override_gain=1,
                 )
@@ -239,7 +241,7 @@ class PPOTrainer:
 
             prev_best_step = None if len(self.eval_accs) == 0 else max(self.eval_accs, key=self.eval_accs.get)
             self.eval_accs[step] = mean_reward
-            if prev_best_step is None or acc_unweighted > self.eval_accs[prev_best_step]:
+            if prev_best_step is None or mean_reward > self.eval_accs[prev_best_step]:
                 if prev_best_step is not None:
                     try:
                         os.remove(f'{self.args.model_dir}/ckp_{prev_best_step}.pth')

@@ -116,11 +116,11 @@ def main():
     if args.mode == 'train':
         train_dataset = SMLMDataset('train', args.train_fpath)
         # train ds is shuffled in its constructor
-        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True, collate_fn=QADataset.collate_fn)
+        train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded train set with {len(train_dataset)} instances')
 
         eval_dataset = SMLMDataset('dev', args.eval_fpath)
-        eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, collate_fn=QADataset.collate_fn)
+        eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded dev set with {len(eval_dataset)} instances')
 
     elif args.mode == 'eval':
@@ -128,7 +128,7 @@ def main():
         train_dataloader = None
 
         eval_dataset = SMLMDataset(args.eval_split, args.eval_fpath)
-        eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=QADataset.collate_fn)
+        eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded {args.eval_split} set with {len(eval_dataset)} instances')
 
 
