@@ -20,6 +20,7 @@ class Policy:
                  reward_shape,
                  kl_coef,
                  ensembling,
+                 num_pooling_layers,
                  device_map = None,
                 ):
         self.tokenizer = T5Tokenizer.from_pretrained(model_type)
@@ -46,6 +47,7 @@ class Policy:
         self.reward_shape = reward_shape
         self.kl_coef = kl_coef
         self.ensembling = ensembling
+        self.num_pooling_layers = num_pooling_layerss
 
     def sample(self,
                text: List[str],
@@ -230,9 +232,13 @@ class Policy:
                 return_dict=True,
             )
 
-        last_two_hidden_states = encoder_outputs["hidden_states"][-2:]
-        last_two_hidden_states = torch.stack(last_two_hidden_states, dim=0) # shape: (2 * bs * seq_length * hidden_dim)
-        # Mean pooling on last 2 hidden states, following: https://arxiv.org/abs/2108.08877
+        last_hidden_states = encoder_outputs["hidden_states"][-self.num_pooling_layers:]
+        if self.num_pooling_layers > 1:
+            last_hidden_states = torch.stack(last_hidden_states, dim=0) # shape: (n * bs * seq_length * hidden_dim)
+        else:
+            last_hidden_states = last_hidden_states[0].unsqueeze(0)
+
+        # Mean pooling on last n hidden layers, following: https://arxiv.org/abs/2108.08877
         embedding = last_two_hidden_states.mean(dim=0) # shape: (bs * seq_length * hidden_dim)
 
         # Mask out hidden states generated from pad tokens

@@ -147,6 +147,7 @@ def main():
             reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
+            num_pooling_layers=args.num_pooling_layers,
             #device_map=device_map,
         )
         policy = Policy(
@@ -160,6 +161,7 @@ def main():
             reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
+            num_pooling_layers=args.num_pooling_layers,
             #device_map=device_map,
         )
         value = Value(
@@ -214,6 +216,7 @@ def main():
             reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
+            num_pooling_layers=args.num_pooling_layers,
             #device_map=device_map,
             device=devices[0],
         )
