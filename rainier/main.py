@@ -143,7 +143,11 @@ def main():
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
             device=devices[0],
-            device_map=device_map,
+            batch_size=args.batch_size,
+            reward_shape=args.reward_shape,
+            kl_coef=args.kl_coef,
+            ensembling=args.ensembling,
+            #device_map=device_map,
         )
         policy = Policy(
             model_type=args.model_type,
@@ -152,14 +156,18 @@ def main():
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
             device=devices[0],
-            device_map=device_map,
+            batch_size=args.batch_size,
+            reward_shape=args.reward_shape,
+            kl_coef=args.kl_coef,
+            ensembling=args.ensembling,
+            #device_map=device_map,
         )
         value = Value(
             model_type=args.model_type,
             model_ckpt=args.model_ckpt if args.use_model_ckpt_for_value else None,
             model=policy.model if args.policy_value_sharing else None,
             device=devices[0],
-            device_map=device_map,
+            #device_map=device_map,
         )
         reward = Reward(
             model_type=args.eval_model_type,
@@ -202,7 +210,11 @@ def main():
             policy_value_sharing=args.policy_value_sharing,
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
-            device_map=device_map,
+            batch_size=args.batch_size,
+            reward_shape=args.reward_shape,
+            kl_coef=args.kl_coef,
+            ensembling=args.ensembling,
+            #device_map=device_map,
             device=devices[0],
         )
         value = None

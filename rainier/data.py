@@ -44,7 +44,7 @@ class SMLMDataset(Dataset):
             instance['id'] = d['id']
             instances.append(instance)
             
-        self.instances = instances[:1000]
+        self.instances = instances[:256]
 
         if split == 'train':
             random.shuffle(self.instances)

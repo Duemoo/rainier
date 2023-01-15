@@ -152,7 +152,7 @@ class PPOTrainer:
 
         # Get reward
         with torch.no_grad():
-            reward_results = self.reward_model.get_reward(
+            reward_results = self.policy_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
                 answer=batch['answer'],
@@ -210,7 +210,7 @@ class PPOTrainer:
                 )
                 knowledges = rollouts['response/text']
 
-                results = self.reward_model.get_reward(
+                results = self.policy_model.get_reward(
                     questions=batch['question'],
                     knowledges=knowledges,
                     answer=batch['answer'],
@@ -269,7 +269,7 @@ class PPOTrainer:
                         )
                         knowledgess.append(rollouts['response/text'])
 
-                results = self.reward_model.get_reward_ensemble(
+                results = self.policy_model.get_reward_ensemble(
                     questions=batch['question'],
                     knowledgess=knowledgess,
                     override_bias=0,
@@ -326,7 +326,7 @@ class PPOTrainer:
                 text=batch['question'],
                 temperature=self.args.temperature,
             )
-            reward_results = self.reward_model.get_reward(
+            reward_results = self.policy_model.get_reward(
                 questions=batch['question'],
                 knowledges=results['response/text'],
                 answer=batch['answer'],

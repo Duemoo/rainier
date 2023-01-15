@@ -10,7 +10,7 @@ class Value:
                  model_type,
                  model_ckpt,
                  device,
-                 device_map,
+                 device_map=None,
                  model=None,
                 ):
         self.tokenizer = T5Tokenizer.from_pretrained(model_type)
