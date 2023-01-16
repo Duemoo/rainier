@@ -171,6 +171,7 @@ def main():
             device=devices[0],
             #device_map=device_map,
         )
+        '''
         reward = Reward(
             model_type=args.eval_model_type,
             model_ckpt=args.eval_model_ckpt,
@@ -182,6 +183,7 @@ def main():
             device=devices[0],
             max_seq_length=args.max_seq_length,
         )
+        '''
 
         optimizer = torch.optim.Adam(policy.model.parameters() if args.policy_value_sharing else itertools.chain(policy.model.parameters(), value.model.parameters()), lr=args.lr, eps=1e-5)
         args.total_steps = ceil_div(args.total_episodes, args.batch_size)
@@ -202,7 +204,7 @@ def main():
             checkpoint.clear()
 
             # Reuse the reward normalization results
-            reward.read_reward_norm(args.reward_dir)
+            policy.read_reward_norm(args.reward_dir)
 
     elif args.mode == 'eval':
         ref_policy = None
@@ -221,6 +223,7 @@ def main():
             device=devices[0],
         )
         value = None
+        '''
         reward = Reward(
             model_type=args.eval_model_type,
             model_ckpt=args.eval_model_ckpt,
@@ -232,6 +235,7 @@ def main():
             device=devices[0],
             max_seq_length=args.max_seq_length,
         )
+        '''
 
         optimizer = None
         scheduler = None
@@ -269,13 +273,13 @@ def main():
         if args.load_from_ckpt is None:
             log.info('Setting reward norm')
             if args.gain is not None and args.bias is not None:
-                reward.gain = args.gain
-                reward.bias = args.bias
+                policy.gain = args.gain
+                policy.bias = args.bias
             else:
                 trainer.set_reward_norm()
-            log.info(f'Set reward norm as gain = {reward.gain}, bias = {reward.bias}')
+            log.info(f'Set reward norm as gain = {policy.gain}, bias = {policy.bias}')
             if not args.nosave:
-                reward.write_reward_norm(args.reward_dir)
+                policy.write_reward_norm(args.reward_dir)
 
     # Evaluate baseline (no knowledge)
     if args.eval_baseline:

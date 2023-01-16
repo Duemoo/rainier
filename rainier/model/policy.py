@@ -1,4 +1,5 @@
 import os
+import json
 from typing import Union, List, Dict, Tuple
 import torch
 import torch.nn.functional as F
@@ -47,7 +48,7 @@ class Policy:
         self.reward_shape = reward_shape
         self.kl_coef = kl_coef
         self.ensembling = ensembling
-        self.num_pooling_layers = num_pooling_layerss
+        self.num_pooling_layers = num_pooling_layers
 
     def sample(self,
                text: List[str],
@@ -239,7 +240,7 @@ class Policy:
             last_hidden_states = last_hidden_states[0].unsqueeze(0)
 
         # Mean pooling on last n hidden layers, following: https://arxiv.org/abs/2108.08877
-        embedding = last_two_hidden_states.mean(dim=0) # shape: (bs * seq_length * hidden_dim)
+        embedding = last_hidden_states.mean(dim=0) # shape: (bs * seq_length * hidden_dim)
 
         # Mask out hidden states generated from pad tokens
         attention_mask_unsqueezed = attention_mask.unsqueeze(-1) # shape: (bs * seq_length * 1)
