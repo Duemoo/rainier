@@ -31,7 +31,7 @@ tasks_by_split = {
 '''
 
 class SMLMDataset(Dataset):
-    def __init__(self, split, fpath):
+    def __init__(self, split, fpath, train_size):
         self.split = split
         with open(fpath, 'r') as f:
             data = json.load(f)
@@ -43,8 +43,11 @@ class SMLMDataset(Dataset):
             instance['answer'] = d['target']
             instance['id'] = d['id']
             instances.append(instance)
-            
-        self.instances = instances[:256]
+        
+        if split == 'train':
+            self.instances = instances[:train_size] if train_size != -1 else instances
+        else:
+            self.instances = instances
 
         if split == 'train':
             random.shuffle(self.instances)

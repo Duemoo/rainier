@@ -32,6 +32,7 @@ class PPOTrainer:
                  init_step: int,
                  eval_accs: Dict,
                  log: logging.Logger,
+                 print_examples=False,
                 ):
         self.args = args
         self.train_dataloader = train_dataloader
@@ -42,6 +43,7 @@ class PPOTrainer:
         self.value_model = value_model
         self.optimizer = optimizer
         self.scheduler = scheduler
+        self.print_examples = print_examples
 
         self.log = log
         if not args.nosave:
@@ -339,8 +341,9 @@ class PPOTrainer:
                 answer=batch['answer'],
                 override_bias=0,
                 override_gain=1,
-            )                
-            print_example(batch, reward_results, results)
+            )        
+            if self.print_examples:
+                print_example(batch, reward_results, results)
             
             rewards += reward_results['rewards/raw']
         #print('='*50)

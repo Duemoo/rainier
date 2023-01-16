@@ -18,7 +18,6 @@ class Policy:
                  max_output_len: int,
                  device,
                  batch_size,
-                 reward_shape,
                  kl_coef,
                  ensembling,
                  num_pooling_layers,
@@ -45,10 +44,13 @@ class Policy:
 
         self.gain, self.bias = None, None
         self.batch_size = batch_size
-        self.reward_shape = reward_shape
         self.kl_coef = kl_coef
         self.ensembling = ensembling
         self.num_pooling_layers = num_pooling_layers
+
+        #Update decoder part only
+        for param in self.model.encoder.parameters():
+            param.requires_grad = False
 
     def sample(self,
                text: List[str],
@@ -235,7 +237,7 @@ class Policy:
 
         last_hidden_states = encoder_outputs["hidden_states"][-self.num_pooling_layers:]
         if self.num_pooling_layers > 1:
-            last_hidden_states = torch.stack(last_hidden_states, dim=0) # shape: (n * bs * seq_length * hidden_dim)
+            last_hidden_states = torch.stack(last_hidden_states, dim=0).to(self.device) # shape: (n * bs * seq_length * hidden_dim)
         else:
             last_hidden_states = last_hidden_states[0].unsqueeze(0)
 

@@ -15,7 +15,7 @@ from utils.utils import ensure_dir, ceil_div, set_seed
 from data import QADataset, SMLMDataset
 from model.policy import Policy
 from model.value import Value
-from model.reward import Reward
+#from model.reward import Reward
 from ppo import PPOTrainer
 
 logging.basicConfig(level=os.environ.get('LOGLEVEL', 'INFO'))
@@ -49,6 +49,13 @@ def main():
                 5: [13, 14, 15],
                 6: [16, 17, 18, 19],
                 7: [20, 21, 22, 23],
+            }
+        elif num_gpus == 4:  # 4x RTX6000
+            device_map = {
+                0: [0],
+                1: [1, 2, 3, 4, 5, 6, 7],
+                2: [8, 9, 10, 11, 12, 13, 14, 15],
+                3: [16, 17, 18, 19, 20, 21, 22, 23],
             }
         elif num_gpus == 1 :
             device_map = {
@@ -114,12 +121,12 @@ def main():
     log.info(f'Loading data ...')
 
     if args.mode == 'train':
-        train_dataset = SMLMDataset('train', args.train_fpath)
+        train_dataset = SMLMDataset('train', args.train_fpath, args.train_size)
         # train ds is shuffled in its constructor
         train_dataloader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded train set with {len(train_dataset)} instances')
 
-        eval_dataset = SMLMDataset('dev', args.eval_fpath)
+        eval_dataset = SMLMDataset('dev', args.eval_fpath, args.train_size)
         eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, drop_last=False, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded dev set with {len(eval_dataset)} instances')
 
@@ -127,7 +134,7 @@ def main():
         train_dataset = None
         train_dataloader = None
 
-        eval_dataset = SMLMDataset(args.eval_split, args.eval_fpath)
+        eval_dataset = SMLMDataset(args.eval_split, args.eval_fpath, args.train_size)
         eval_dataloader = DataLoader(eval_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=SMLMDataset.collate_fn)
         log.info(f'Loaded {args.eval_split} set with {len(eval_dataset)} instances')
 
@@ -144,11 +151,10 @@ def main():
             max_output_len=args.max_output_len,
             device=devices[0],
             batch_size=args.batch_size,
-            reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             num_pooling_layers=args.num_pooling_layers,
-            #device_map=device_map,
+            device_map=device_map,
         )
         policy = Policy(
             model_type=args.model_type,
@@ -158,18 +164,17 @@ def main():
             max_output_len=args.max_output_len,
             device=devices[0],
             batch_size=args.batch_size,
-            reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             num_pooling_layers=args.num_pooling_layers,
-            #device_map=device_map,
+            device_map=device_map,
         )
         value = Value(
             model_type=args.model_type,
             model_ckpt=args.model_ckpt if args.use_model_ckpt_for_value else None,
             model=policy.model if args.policy_value_sharing else None,
             device=devices[0],
-            #device_map=device_map,
+            device_map=device_map,
         )
         '''
         reward = Reward(
@@ -177,7 +182,6 @@ def main():
             model_ckpt=args.eval_model_ckpt,
             max_input_len=args.max_input_len,
             batch_size=args.batch_size,
-            reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
@@ -215,11 +219,10 @@ def main():
             max_input_len=args.max_input_len,
             max_output_len=args.max_output_len,
             batch_size=args.batch_size,
-            reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             num_pooling_layers=args.num_pooling_layers,
-            #device_map=device_map,
+            device_map=device_map,
             device=devices[0],
         )
         value = None
@@ -229,7 +232,6 @@ def main():
             model_ckpt=args.eval_model_ckpt,
             max_input_len=args.max_input_len,
             batch_size=args.batch_size,
-            reward_shape=args.reward_shape,
             kl_coef=args.kl_coef,
             ensembling=args.ensembling,
             device=devices[0],
@@ -266,6 +268,7 @@ def main():
         init_step=init_step,
         eval_accs=eval_accs,
         log=log,
+        print_examples=args.print_examples
     )
 
     # Normalize the rewards to so that initially they have mean 0, var 1
