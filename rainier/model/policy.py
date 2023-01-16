@@ -242,7 +242,7 @@ class Policy:
             last_hidden_states = last_hidden_states[0].unsqueeze(0)
 
         # Mean pooling on last n hidden layers, following: https://arxiv.org/abs/2108.08877
-        embedding = last_hidden_states.mean(dim=0) # shape: (bs * seq_length * hidden_dim)
+        embedding = last_hidden_states.mean(dim=0).to(self.device) # shape: (bs * seq_length * hidden_dim)
 
         # Mask out hidden states generated from pad tokens
         attention_mask_unsqueezed = attention_mask.unsqueeze(-1) # shape: (bs * seq_length * 1)
